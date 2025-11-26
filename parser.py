@@ -1,3 +1,5 @@
+from time import sleep
+
 import requests
 import os
 
@@ -11,9 +13,9 @@ class PageIter:
         self.url = f'https://www.wildberries.ru/__internal/search/exactmatch/ru/common/v18/search?ab_testing=false&ab_testing=false&appType=1&curr=rub&dest=123585839&hide_dtype=11&inheritFilters=false&lang=ru&page=1&query={QUERY}&resultset=catalog&sort=popular&spp=30&suppressSpellcheck=false&uclusters=9&page={self.page}'
         auth = ''
         cookie = ''
-        with open("/headers/auth.txt") as f:
+        with open("headers/auth.txt") as f:
             auth = f.read()
-        with open("/headers/cookie.txt") as f:
+        with open("headers/cookie.txt") as f:
             cookie = f.read()
 
         self.headers = {
@@ -34,8 +36,7 @@ class PageIter:
         'sec-ch-ua-platform': '"Windows"',
         }
 
-        response = requests.get(url=self.url, headers=self.headers, proxies=proxies)
-        return response.json()
+        return self
 
     def __next__(self):
         self.page += 1
@@ -43,17 +44,12 @@ class PageIter:
         response = requests.get(url=self.url, headers=self.headers, proxies=proxies)
         return response.json()
 
-def get_query():
-    pass
-    # url = 'https://www.wildberries.ru/catalog/0/search.aspx?page=1&sort=popular&search=%D0%BF%D0%B0%D0%BB%D1%8C%D1%82%D0%BE%20%D0%B8%D0%B7%20%D0%BD%D0%B0%D1%82%D1%83%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B9%20%D1%88%D0%B5%D1%80%D1%81%D1%82%D0%B8'
-
-
 def get_products(response):
     products = []
 
     products_raw = response.get('products', None)
 
-    while products_raw is not None and len(products_raw) > 0:
+    while products_raw is not None and len(products) < len(products_raw):
         for product in products_raw:
             products.append({
                 'brand': product.get('brand', None),
@@ -64,16 +60,26 @@ def get_products(response):
     return products
 
 def check():
-    pageiter = PageIter()
-
-    products = get_products()
+    iterclass = PageIter()
+    pageiter = iter(iterclass)
 
     items = []
 
-    for product in products:
-        text = f"Название: {product['name']}\nБренд: {product['brand']}"
-        items.append(text)
+    while True:
+        count = 1
+        products = get_products(next(pageiter))
+        if len(products) == 0 or products is None or count > 10:
+            break
+
+        for product in products:
+            text = f"Название: {product['name']}\nБренд: {product['brand']}"
+            print(text)
+            items.append(text)
+
+        count += 1
+        sleep(1)
 
     return items
+
 
 print(check())
