@@ -49,3 +49,27 @@ class ProductScreapper:
             response = requests.get(url=url, headers=self.headers, proxies=self.proxies)
             if response.status_code == 200:
                 return response.json()
+
+    def get_product_images(self, product_id):
+        images = []
+
+        part = product_id // 1000
+        vol = product_id // 100000
+        basket = 10
+        while basket <= 30:
+            url = f'https://basket-{basket}.wbcontent.net/vol{vol}/part{part}/{product_id}/images/big/1.webp'
+            basket += 1
+            response = requests.get(url=url, headers=self.headers, proxies=self.proxies)
+            if response.status_code == 200:
+                break
+
+        count = 1
+        while True:
+            url = f'https://basket-{basket}.wbcontent.net/vol{vol}/part{part}/{product_id}/images/big/{count}.webp'
+            response = requests.get(url=url, headers=self.headers, proxies=self.proxies)
+            if response.status_code == 200:
+                images.append(url)
+                count += 1
+
+            elif response.status_code == 404:
+                return images
