@@ -1,66 +1,50 @@
 from time import sleep
+from scrapper.iterator import PageIter
+from scrapper.pagescrapper import ProductScreapper
 
-import requests
-import os
 
-proxies = os.getenv('PROXIES')
 QUERY = '%D0%BF%D0%B0%D0%BB%D1%8C%D1%82%D0%BE%20%D0%B8%D0%B7%20%D0%BD%D0%B0%D1%82%D1%83%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B9%20%D1%88%D0%B5%D1%80%D1%81%D1%82%D0%B8'
 
-
-class PageIter:
-    def __iter__(self):
-        self.page = 1
-        self.url = f'https://www.wildberries.ru/__internal/search/exactmatch/ru/common/v18/search?ab_testing=false&ab_testing=false&appType=1&curr=rub&dest=123585839&hide_dtype=11&inheritFilters=false&lang=ru&page=1&query={QUERY}&resultset=catalog&sort=popular&spp=30&suppressSpellcheck=false&uclusters=9&page={self.page}'
-        auth = ''
-        cookie = ''
-        with open("headers/auth.txt") as f:
-            auth = f.read()
-        with open("headers/cookie.txt") as f:
-            cookie = f.read()
-
-        self.headers = {
-        'Accept': '*/*',
-        'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
-        'Connection': 'keep-alive',
-        'DNT': '1',
-        'Origin': 'https://www.wildberries.ru',
-        'Referer': 'https://www.wildberries.ru/catalog/0/search.aspx?search=%D0%BF%D0%B0%D0%BB%D1%8C%D1%82%D0%BE+%D0%B8%D0%B7+%D0%BD%D0%B0%D1%82%D1%83%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B9+%D1%88%D0%B5%D1%80%D1%81%D1%82%D0%B8',
-        'Cookie' : cookie,
-        'authorization' : auth,
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'cross-site',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
-        'sec-ch-ua': '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        }
-
-        return self
-
-    def __next__(self):
-        self.page += 1
-        self.url = f'https://www.wildberries.ru/__internal/search/exactmatch/ru/common/v18/search?ab_testing=false&ab_testing=false&appType=1&curr=rub&dest=123585839&hide_dtype=11&inheritFilters=false&lang=ru&page=1&query={QUERY}&resultset=catalog&sort=popular&spp=30&suppressSpellcheck=false&uclusters=9&page={self.page}'
-        response = requests.get(url=self.url, headers=self.headers, proxies=proxies)
-        return response.json()
+"""
+• Ссылка на товар +
+• Артикул +
+• Название +
+• Цена +
+• Описание +
+• Ссылки на изображения через запятую
+• Описание +
+• Все характеристики с сохранением их структуры +
+• Название селлера +
+• Ссылка на селлера +
+• Размеры товара через запятую + 
+• Остатки по товару (число) +
+• Рейтинг +
+• Количество отзывов +
+"""
 
 def get_products(response):
     products = []
 
     products_raw = response.get('products', None)
 
+    products_scrapper = ProductScreapper()
+
     while products_raw is not None and len(products) < len(products_raw):
-        for product in products_raw:
-            products.append({
-                'brand': product.get('brand', None),
-                'name': product.get('name', None),
-                'id': product.get('id', None)
-            })
+        for item in products_raw:
+            # products.append({
+            #     'brand': product.get('brand', None),
+            #     'name': product.get('name', None),
+            #     'id': product.get('id', None)
+            # })
+            products.append(products_scrapper.get_product_info(item['id']).get('products'))
 
     return products
 
+def get_product_info(id):
+    pass
+
 def check():
-    iterclass = PageIter()
+    iterclass = PageIter(QUERY)
     pageiter = iter(iterclass)
 
     items = []
@@ -68,7 +52,7 @@ def check():
     while True:
         count = 1
         products = get_products(next(pageiter))
-        if len(products) == 0 or products is None or count > 10:
+        if len(products) == 0 or products is None:
             break
 
         for product in products:
@@ -78,7 +62,7 @@ def check():
 
         count += 1
         sleep(1)
-
+    print(count)
     return items
 
 
