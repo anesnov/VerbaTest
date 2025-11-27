@@ -36,7 +36,9 @@ def get_products(response):
             #     'name': product.get('name', None),
             #     'id': product.get('id', None)
             # })
-            products.append(products_scrapper.get_product_info(item['id']).get('products'))
+            product = products_scrapper.get_product_info(item['id']).get('products')
+            product[0]['Images'] = products_scrapper.get_product_images(item['id'])
+            products.append(product)
 
     return products
 
@@ -60,6 +62,7 @@ def check():
             print(text)
             items.append(text)
 
+        print(f'Страница {count} обработана')
         count += 1
         sleep(1)
     print(count)
