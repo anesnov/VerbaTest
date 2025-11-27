@@ -1,4 +1,5 @@
 import time
+from codecs import ignore_errors
 
 import requests
 import os
@@ -41,6 +42,7 @@ class ProductScreapper:
         self.headers['Referer'] = f'https://www.wildberries.ru/catalog/{product_id}/detail.aspx'
 
         response = requests.get(url=self.url, headers=self.headers, proxies=self.proxies)
+
         return response.json()
 
     def get_product_description(self, product_id):
@@ -54,49 +56,27 @@ class ProductScreapper:
             if response.status_code == 200:
                 return response.json()
 
-    def get_product_images(self, product_id):
+    def get_product_images(self, product_id, pics):
         images = []
-        pic_headers = {
-            'User - Agent': 'Mozilla / 5.0(Windows NT 10.0;Win64;x64;rv: 144.0) Gecko / 20100101Firefox / 144.0',
-            'Accept' : 'text / html, application / xhtml + xml, application / xml; q = 0.9, * / *;q = 0.8',
-            'Accept - Language' : 'ru - RU, ru; q = 0.8, en - US; q = 0.5, en; q = 0.3',
-            'Accept - Encoding' : 'gzip, deflate, br, zstd',
-            'DNT': '1',
-            'Sec - GPC' : '1',
-            'Connection': 'close',
-            'Upgrade - Insecure - Requests' : '1',
-            'Sec - Fetch - Dest' : 'document',
-            'Sec - Fetch - Mode' : 'navigate',
-            'Sec - Fetch - Site' : 'none',
-            'Sec - Fetch - User' : '?1',
-            'Priority' : 'u = 0, i'
-        }
 
         part = product_id // 1000
         vol = product_id // 100000
         basket = 10
         while basket <= 30:
             url = f'https://basket-{basket}.wbcontent.net/vol{vol}/part{part}/{product_id}/images/big/1.webp'
-            response = requests.get(url=url, headers=self.headers, proxies=self.proxies)
+            try:
+                response = requests.get(url=url)
+            except SSLError:
+                break
+
             if response.status_code == 200:
                 break
             else:
                 basket += 1
 
         count = 1
-        while True:
+        for count in range(count, pics+1):
             url = f'https://basket-{basket}.wbcontent.net/vol{vol}/part{part}/{product_id}/images/big/{count}.webp'
-            try:
-                response = requests.get(url=url, headers=pic_headers) # , headers=self.headers, proxies=self.proxies
+            images.append(url)
 
-            except SSLError as e:
-                print(f'URL с SSLError: {url}')
-                pass
-
-            if response.status_code == 200:
-                images.append(url)
-                count += 1
-                time.sleep(0.1)
-
-            elif response.status_code == 404:
-                return images
+        return images

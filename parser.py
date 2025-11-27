@@ -37,13 +37,12 @@ def get_products(response):
             #     'id': product.get('id', None)
             # })
             product = products_scrapper.get_product_info(item['id']).get('products')
-            product[0]['Images'] = products_scrapper.get_product_images(item['id'])
+            product[0]['description'] = products_scrapper.get_product_info(item['id']).get('products')
+            product[0]['images'] = products_scrapper.get_product_images(item['id'], item['pics'])
             products.append(product)
 
     return products
 
-def get_product_info(id):
-    pass
 
 def check():
     iterclass = PageIter(QUERY)
