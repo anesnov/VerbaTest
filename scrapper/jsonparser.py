@@ -1,3 +1,4 @@
+# Парсинг полученного JSON в словарь с нужными данными
 def parse_wb_json(product):
     # 1. Артикул
     article = product.get("id")
@@ -25,17 +26,17 @@ def parse_wb_json(product):
     # 7. Характеристики
     options = product.get("description", {}).get("options", [])
     country = ""
-    charcs = {}
+    charcs = ""
 
     for opt in options:
         name = opt.get("name")
         value = opt.get("value")
 
         if name and value:
-            charcs[name] = value
+            charcs += f'{name}: {value};\n'
 
         # Страна производства
-        if name is "Страна производства":
+        if name == "Страна производства":
             country = value
 
     # 8. Селлер

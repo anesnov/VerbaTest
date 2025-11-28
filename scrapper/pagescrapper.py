@@ -1,13 +1,13 @@
-import time
-from codecs import ignore_errors
-
 import requests
 import os
 
 from requests.exceptions import SSLError
 
 
-class ProductScreapper:
+# Получение разных данных по товару
+class ProductScrapper:
+
+    # Инициализация класса (запись HTTP заголовка для запросов)
     def __init__(self):
 
         self.proxies = os.getenv('PROXIES')
@@ -19,6 +19,7 @@ class ProductScreapper:
         with open("headers/cookie.txt") as f:
             cookie = f.read()
 
+        self.basket = 10
         self.url = ''
         self.headers = {
             'Accept': '*/*',
@@ -37,6 +38,7 @@ class ProductScreapper:
             'sec-ch-ua-platform': '"Windows"',
         }
 
+    # Получение информации со страницы товара
     def get_product_info(self, product_id):
         self.url = f'https://www.wildberries.ru/__internal/card/cards/v4/detail?appType=1&curr=rub&dest=123585839&spp=30&hide_dtype=11&ab_testing=false&lang=ru&nm={product_id}'
         self.headers['Referer'] = f'https://www.wildberries.ru/catalog/{product_id}/detail.aspx'
@@ -45,38 +47,43 @@ class ProductScreapper:
 
         return response.json()
 
+    # Получение развёрнутого описания
     def get_product_description(self, product_id):
         part = product_id // 1000
         vol = product_id // 100000
+
+        # Нахождение нужной корзины с изображениями и описанием
         basket = 10
         while basket <= 30:
             url = f'https://basket-{basket}.wbcontent.net/vol{vol}/part{part}/{product_id}/info/ru/card.json'
             basket += 1
             response = requests.get(url=url, headers=self.headers, proxies=self.proxies)
             if response.status_code == 200:
+                self.basket = basket
                 return response.json()
 
+    # Формирование списка ссылок на изображения в карточке
     def get_product_images(self, product_id, pics):
         images = []
 
         part = product_id // 1000
         vol = product_id // 100000
-        basket = 10
-        while basket <= 30:
-            url = f'https://basket-{basket}.wbcontent.net/vol{vol}/part{part}/{product_id}/images/big/1.webp'
-            try:
-                response = requests.get(url=url)
-            except SSLError:
-                break
-
-            if response.status_code == 200:
-                break
-            else:
-                basket += 1
+        # basket = 10
+        # while basket <= 30:
+        #     url = f'https://basket-{basket}.wbcontent.net/vol{vol}/part{part}/{product_id}/images/big/1.webp'
+        #     try:
+        #         response = requests.get(url=url)
+        #     except SSLError:
+        #         break
+        #
+        #     if response.status_code == 200:
+        #         break
+        #     else:
+        #         basket += 1
 
         count = 1
         for count in range(count, pics+1):
-            url = f'https://basket-{basket}.wbcontent.net/vol{vol}/part{part}/{product_id}/images/big/{count}.webp'
+            url = f'https://basket-{self.basket}.wbcontent.net/vol{vol}/part{part}/{product_id}/images/big/{count}.webp'
             images.append(url)
 
         return images

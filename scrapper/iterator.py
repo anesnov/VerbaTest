@@ -2,10 +2,11 @@ import requests
 import os
 
 
+# Класс-итератор для перебора всех страниц
 class PageIter:
+
     def __init__(self, query):
         self.query = query
-
 
     def __iter__(self):
         self.proxies = os.getenv('PROXIES')
