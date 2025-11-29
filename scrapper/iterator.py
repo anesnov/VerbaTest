@@ -44,3 +44,6 @@ class PageIter:
         self.url = f'https://www.wildberries.ru/__internal/search/exactmatch/ru/common/v18/search?ab_testing=false&ab_testing=false&appType=1&curr=rub&dest=123585839&hide_dtype=11&inheritFilters=false&lang=ru&page=1&query={self.query}&resultset=catalog&sort=popular&spp=30&suppressSpellcheck=false&uclusters=9&page={self.page}'
         response = requests.get(url=self.url, headers=self.headers, proxies=self.proxies)
         return response.json()
+
+    def get_page(self):
+        return self.page
