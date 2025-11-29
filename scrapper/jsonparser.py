@@ -7,17 +7,22 @@ def parse_wb_json(product):
     item_url = f"https://www.wildberries.ru/catalog/{article}/detail.aspx"
 
     # 3. Название
-    name = product.get("name", "")
+    product_name = product.get("name", "")
 
     # 4. Цена
-    price = None
+    price = 0
     if "sizes" in product and len(product["sizes"]) > 0:
-        price = product["sizes"][0].get("price", {}).get("product")
-        if price is not None:
-            price = price / 100
+        # price = product["sizes"][0].get("price", {}).get("product")
+
+        for size in product.get("sizes", []):
+            price_temp = size.get("price", {}).get("product")
+            if price_temp is not None:
+                price = price_temp / 100
 
     # 5. Описание
-    desc = product.get("description").get("description")
+    desc = product.get("description", "")
+    if desc != "":
+        desc = desc.get("description", "")
 
     # 6. Изображения
     images = product.get("images", [])
@@ -59,10 +64,10 @@ def parse_wb_json(product):
     # 12. Количество отзывов
     feedbacks = product.get("nmFeedbacks") or product.get("feedbacks") or 0
 
-    return {
+    result = {
         "url": item_url,
         "article": article,
-        "name": name,
+        "name": product_name,
         "price": price,
         "description": desc,
         "images": images_str,
@@ -75,3 +80,5 @@ def parse_wb_json(product):
         "rating": rating,
         "feedbacks": feedbacks
     }
+
+    return result
